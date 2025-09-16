@@ -1,1 +1,6 @@
-Hi im peter and im taking  this class because i enjoy low level developoment
+Hi, my name is Peter, and I am a junior. I am really interested in low level development, and I am also interested in full stack development.
+I use Linux on my personal PC at home, dual booting between Arch Linux and Windows 10.
+I sometimes boot into my Fedora distro but it just depends on how I'm feeling. I love low level development andI love how it makes me think, I think that learning how machines work from the ground up is really interesting.
+Over the summer, I tried to develop my own operating system, I implemented a BIOS bootable boot sector that conformed to the FAT12 VBR/ BPB format.
+I learned about converting LBA to CHS and wrote assembly code to do so, and a little bit about how disks are organized and got myself familliar with how boot sectors worked a little.
+I look forward to this class and I want to learn a ton and push myself.

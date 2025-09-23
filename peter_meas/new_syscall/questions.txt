@@ -1,0 +1,9 @@
+What did get_task_comm report as the name of the current task? Why?
+get_task_comm reports the name of the current task as "Init" because this process
+is the very first userspace process. At this moment in time, init process
+was made from my initramfs and the task struct->comm for this process is set to initis set to init by default unless explicitly changed.
+
+Try booting your new init program with your original kernel (~/kernel-original). What happens?
+What exit code does your init program return? Why?
+
+Trying to boot into my original kernel with my new init program fails because the old kernel doesnt know my kdlp syscall.It most likely panic'd and just killed my init. The exit code is nonzero because init was temrinated due to an unknown syscall.

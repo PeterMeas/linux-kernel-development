@@ -1,0 +1,50 @@
+Linux version 6.16.0-kdlp+ (peter_meas@kdlp) (riscv64-linux-gnu-gcc (GCC) 15.2.1 20250808 (Red Hat Cross 15.2.1-1), GNU ld version 2.44-1.fc42) #3 Tue Sep 23 20:29:37 UTC 2025
+random: crng init done
+Machine model: riscv-virtio,qemu
+OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+Zone ranges:
+  DMA32    [mem 0x0000000080000000-0x0000000087ffffff]
+  Normal   empty
+Movable zone start for each node
+Early memory node ranges
+  node   0: [mem 0x0000000080000000-0x0000000087ffffff]
+Initmem setup node 0 [mem 0x0000000080000000-0x0000000087ffffff]
+riscv: base ISA extensions achim
+riscv: ELF capabilities acim
+Ticket spinlock: enabled
+Kernel command line: 
+printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+Dentry cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+Inode-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+Built 1 zonelists, mobility grouping on.  Total pages: 32768
+mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+riscv-intc: 64 local interrupts mapped
+clint: clint@2000000: timer running at 10000000 Hz
+clocksource: clint_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+pid_max: default: 32768 minimum: 301
+Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+Memory: 125032K/131072K available (1435K kernel code, 873K rwdata, 160K rodata, 343K init, 166K bss, 5680K reserved, 0K cma-reserved)
+clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+cpu0: Ratio of byte access time to unaligned word access is 6.95, unaligned accesses are fast
+clocksource: Switched to clocksource clint_clocksource
+workingset: timestamp_bits=62 max_order=15 bucket_order=0
+riscv-plic: plic@c000000: mapped 95 interrupts with 1 handlers for 2 contexts.
+Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+printk: legacy console [ttyS0] disabled
+10000000.serial: ttyS0 at MMIO 0x10000000 (irq = 3, base_baud = 230400) is a 16550A
+printk: legacy console [ttyS0] enabled
+Unpacking initramfs...
+Freeing initrd memory: 392K
+clk: Disabling unused clocks
+Freeing unused kernel image (initmem) memory: 340K
+This architecture does not have kernel memory protection.
+Run /sbin/init as init process
+init started: BusyBox v1.38.0.git (2025-09-30 06:49:57 UTC)
+starting pid 15, tty '': '/usr/bin/busybox --install -s'
+starting pid 16, tty '': '/bin/sh'
+/ 

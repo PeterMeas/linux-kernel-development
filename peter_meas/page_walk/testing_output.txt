@@ -1,0 +1,86 @@
+RISC-V PAGE TABLE WALK - TESTING RESULTS
+Peter Meas
+
+--- Testing Environment ----
+Architecture: RISC-v 64 bit
+Kernel: Linux 6.16 w/riscv_pagetable_walk syscall
+Syscall #: 257
+Paging mode: Sv57
+
+--- Complete Test Output ---
+
+[    1.476160] Run /sbin/init as init process
+init started: BusyBox v1.38.0.git (2025-09-30 06:49:57 UTC)
+starting pid 45, tty '': '/usr/bin/busybox --install -s'
+starting pid 46, tty '': '/bin/sh'
+/ /test_pagetable_walk
+=== RISC-V Page Table Walk Test ===
+Syscall number: 257
+
+Testing code segment...
+
+[Code (RX)] VA = 0x1027a - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x000000002001fc5b PPN =0x8007f
+Flags: V=1 R=1 W=0 X=1 U=1 G=0 A=1 D=0
+
+Testing .rodata...
+
+[.rodata (R)] VA = 0x12f70 - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x00000000210a845b PPN =0x842a1
+Flags: V=1 R=1 W=0 X=1 U=1 G=0 A=1 D=0
+
+Testing .data...
+
+[.data (RW)] VA = 0x16200 - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x00000000204140d7 PPN =0x81050
+Flags: V=1 R=1 W=1 X=0 U=1 G=0 A=1 D=1
+
+Testing heap...
+
+[Heap (RW)] VA = 0x7fff9c77a008 - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x00000000204118d7 PPN =0x81046
+Flags: V=1 R=1 W=1 X=0 U=1 G=0 A=1 D=1
+
+Testing stack...
+
+[Stack (RW)] VA = 0x7fffd7a2dbe4 - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x0000000020413cd7 PPN =0x8104f
+Flags: V=1 R=1 W=1 X=0 U=1 G=0 A=1 D=1
+
+Testing mmap (R)...
+
+[mmap (R)] VA = 0x7fff9c779000 - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x000000002070b153 PPN =0x81c2c
+Flags: V=1 R=1 W=0 X=0 U=1 G=0 A=1 D=0
+
+Testing mmap (RX)...
+
+[mmap (RX)] VA = 0x7fff9c779000 - Entries=6
+SATP=0xa000500000082c59 MODE = Sv57
+ leaf PTE=0x000000002070b15b PPN =0x81c2c
+Flags: V=1 R=1 W=0 X=1 U=1 G=0 A=1 D=0
+
+=== Test Complete ===
+/ poweroff
+The system is going down NOW!
+Sent SIGTERM to all processes
+Sent SIGKILL to all processes
+Requesting system poweroff
+
+-- Analysis ---
+
+Flag combinations found:
+
+1. CODE (RX): V=1 R=1 W=0 X=1 - Read/Execute, not writable
+2. RODATA (RX): V=1 R=1 W=0 X=1 - Same as code (X bit unexpected)
+3. DATA/HEAP/STACK (RW): V=1 R=1 W=1 X=0 D=1 - Writable, not executable
+4. MMAP R-ONLY: V=1 R=1 W=0 X=0 - Read-only
+5. MMAP EXEC (RX): V=1 R=1 W=0 X=1 - mprotect() changed it to executable
+
+The syscall successfully reads SATP register, walks all 6 Sv57 page table levels, extracts the valid PTEs with the correct flags, and shows proper memory protection with the W^x enforcement

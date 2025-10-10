@@ -1,0 +1,36 @@
+RISC-V PAGE TABLE WALK - QUESTIONS
+Peter Meas
+Q1
+I tested different parts of my programs memory to see what flags they had
+
+1. code scetion, data section, stack - pretty obvious ones
+2. i tried malloic for heap memory
+3. mmap with different prot flags to make custom pages
+4. mprotect to change permissions after allocation
+
+I wasn't totally sure waht combinations i would find, but i found different memory types would have different permissions. the mmap/mprotect approach let me control the flags more directly
+
+Q2
+(RX): V=1 R=1 W=0 X=1
+Executable because it contains instructions
+Readable so CPU can fetch instructions
+Not writable for secruity reasons?
+
+.RODAT (RX): V=1 R=1 W=0 X=1
+Confused me a little, why is it read only data executable
+Maybe in same page as code
+Should probably be R only but got x=1 somehow
+
+DATA/STACK (RW): V=1 R=1 W=1 X=0 D=1
+Need to read and write variables
+X=0 means not executable(wouldnt want to run data as code)
+D=1 means dirty, already been written to?
+
+MMAP READ-ONLY (R): V=1 R=1 W=0 X=0
+Made with PROT_READ
+readable, nothing else
+
+MMAP EXECUTABLE(RX): V=1 R=1 W=0 X=1
+mprotect() added PROT_EXEC
+shows you can change permissions after mapping
+the D bit is 0 here but was 1 for data, im not sure why

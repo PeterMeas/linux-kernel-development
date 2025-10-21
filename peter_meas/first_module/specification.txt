@@ -1,0 +1,17 @@
+KDLP proc module
+
+This module will create an entry in /proc that holds a fixed message for all users to read.
+
+The file will show up in /proc as a file named kdlp.
+
+The file will be owned by user root and group root.
+
+The permissions for the file will be read only (0444).
+
+Operations:
+	- Read:
+When a user opens /proc/kdlp and calls read on it, the message inside the kdlp.c file will execute, the function inside that source code file will execute and return whatever message was in the file.From file position 0, they should recieve the messafge "KDLP module by Peter Meas\n". if user has already read some bytes and the file pos is partway through, they will get the remaining portion of the msg starting from said position. If the user tries to read when the fiile pos is at or beyond the end of the message, then they will get 0 bytes, which is basically end of file. The value returned by the read system call should be the number of bytes copied to the users buffer. If a user tries to pass a buffer thats too small to hold the whole message, we can just copy as many bytes as we can to fit their buffer. If  the user passes an invalid memory pointer, the kernel should detect this and return an error code(-EFAULT) instead of crashing.
+	- Write:
+If a user tries to write to the file in /proc/kdlp the user will face a -EINVAL return message. The file does not support write operations by design. Any attempt to write to /proc/kdlp will return -EINVAL.
+	- Seek:
+The user should be able to seek any valid position within the message. If message is 26 bytes long, then position 0 is the start and position 26 would be right at the end. Seeking to position 10 would let them start reading from the 11th character. If a user uses SEEK_SET, lseek with this and a certain offset would mean move to position of the said offset. lseek with SEEK_CUR would mean if we are at position 5, and we seek with SEEK_CUR and use offset 3, we move to our current position + the offset we inputed, so if we seek with offset -2 we move back to position 3 if we are at position 5. SEEK_END would seek relative to the end of file, so if our message is 26 bytes, if a user seeks with SEEK_END and uses an offset of 0, they will be at the end of the file, position 26. If SEEK_END is used with a negative offset, we are just going that number away from the end of the file(26). Seeks resulting in a negative position will fail and return -EINVAL. Seeks to position beyond the end of message will retrun success while seeks to position before the  message even start return false, if we start at position 0 and seek to position -3 we have to return -EINVAL.

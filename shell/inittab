@@ -1,2 +1,0 @@
-::sysinit:/usr/bin/busybox --install -s
-::respawn:/bin/sh

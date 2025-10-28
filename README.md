@@ -218,7 +218,7 @@ if (!(_pte & 0x1) || (_pte & 0xE))
 
 ## Testing Methodology
 
-All projects follow a consistent testing approach:
+The kernel module was developed with a consistent testing approach:
 1. Write detailed specifications first
 2. Implement TAP-compliant tests that exercise edge cases
 3. Write code to satisfy tests
@@ -269,11 +269,7 @@ ok 10 - negative seek position fails
 
 ## License & Usage
 
-This code is provided for educational purposes. Feel free to reference for learning, but note:
-- Not production-ready
-- May contain coursework-specific implementations
-- Use at your own risk in any kernel modifications
-
+This code is provided for educational purposes. Feel free to reference for learning
 For questions or discussions about the implementations, feel free to open an issue.
 
 ---

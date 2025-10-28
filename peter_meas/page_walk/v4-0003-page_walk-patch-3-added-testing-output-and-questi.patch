@@ -1,0 +1,151 @@
+From df7021d72c10a358d2e7c697869aec9b6aedfc77 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 10 Oct 2025 01:12:37 +0000
+Subject: [PATCH v4 3/3] page_walk: patch 3;added testing output and questions
+ files
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+---
+ peter_meas/page_walk/questions.txt      | 36 +++++++++++
+ peter_meas/page_walk/testing_output.txt | 86 +++++++++++++++++++++++++
+ 2 files changed, 122 insertions(+)
+ create mode 100644 peter_meas/page_walk/questions.txt
+ create mode 100644 peter_meas/page_walk/testing_output.txt
+
+diff --git a/peter_meas/page_walk/questions.txt b/peter_meas/page_walk/questions.txt
+new file mode 100644
+index 0000000..fe59db1
+--- /dev/null
++++ b/peter_meas/page_walk/questions.txt
+@@ -0,0 +1,36 @@
++RISC-V PAGE TABLE WALK - QUESTIONS
++Peter Meas
++Q1
++I tested different parts of my programs memory to see what flags they had
++
++1. code scetion, data section, stack - pretty obvious ones
++2. i tried malloic for heap memory
++3. mmap with different prot flags to make custom pages
++4. mprotect to change permissions after allocation
++
++I wasn't totally sure waht combinations i would find, but i found different memory types would have different permissions. the mmap/mprotect approach let me control the flags more directly
++
++Q2
++(RX): V=1 R=1 W=0 X=1
++Executable because it contains instructions
++Readable so CPU can fetch instructions
++Not writable for secruity reasons?
++
++.RODAT (RX): V=1 R=1 W=0 X=1
++Confused me a little, why is it read only data executable
++Maybe in same page as code
++Should probably be R only but got x=1 somehow
++
++DATA/STACK (RW): V=1 R=1 W=1 X=0 D=1
++Need to read and write variables
++X=0 means not executable(wouldnt want to run data as code)
++D=1 means dirty, already been written to?
++
++MMAP READ-ONLY (R): V=1 R=1 W=0 X=0
++Made with PROT_READ
++readable, nothing else
++
++MMAP EXECUTABLE(RX): V=1 R=1 W=0 X=1
++mprotect() added PROT_EXEC
++shows you can change permissions after mapping
++the D bit is 0 here but was 1 for data, im not sure why
+diff --git a/peter_meas/page_walk/testing_output.txt b/peter_meas/page_walk/testing_output.txt
+new file mode 100644
+index 0000000..aa39941
+--- /dev/null
++++ b/peter_meas/page_walk/testing_output.txt
+@@ -0,0 +1,86 @@
++RISC-V PAGE TABLE WALK - TESTING RESULTS
++Peter Meas
++
++--- Testing Environment ----
++Architecture: RISC-v 64 bit
++Kernel: Linux 6.16 w/riscv_pagetable_walk syscall
++Syscall #: 257
++Paging mode: Sv57
++
++--- Complete Test Output ---
++
++[    1.476160] Run /sbin/init as init process
++init started: BusyBox v1.38.0.git (2025-09-30 06:49:57 UTC)
++starting pid 45, tty '': '/usr/bin/busybox --install -s'
++starting pid 46, tty '': '/bin/sh'
++/ /test_pagetable_walk
++=== RISC-V Page Table Walk Test ===
++Syscall number: 257
++
++Testing code segment...
++
++[Code (RX)] VA = 0x1027a - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x000000002001fc5b PPN =0x8007f
++Flags: V=1 R=1 W=0 X=1 U=1 G=0 A=1 D=0
++
++Testing .rodata...
++
++[.rodata (R)] VA = 0x12f70 - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x00000000210a845b PPN =0x842a1
++Flags: V=1 R=1 W=0 X=1 U=1 G=0 A=1 D=0
++
++Testing .data...
++
++[.data (RW)] VA = 0x16200 - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x00000000204140d7 PPN =0x81050
++Flags: V=1 R=1 W=1 X=0 U=1 G=0 A=1 D=1
++
++Testing heap...
++
++[Heap (RW)] VA = 0x7fff9c77a008 - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x00000000204118d7 PPN =0x81046
++Flags: V=1 R=1 W=1 X=0 U=1 G=0 A=1 D=1
++
++Testing stack...
++
++[Stack (RW)] VA = 0x7fffd7a2dbe4 - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x0000000020413cd7 PPN =0x8104f
++Flags: V=1 R=1 W=1 X=0 U=1 G=0 A=1 D=1
++
++Testing mmap (R)...
++
++[mmap (R)] VA = 0x7fff9c779000 - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x000000002070b153 PPN =0x81c2c
++Flags: V=1 R=1 W=0 X=0 U=1 G=0 A=1 D=0
++
++Testing mmap (RX)...
++
++[mmap (RX)] VA = 0x7fff9c779000 - Entries=6
++SATP=0xa000500000082c59 MODE = Sv57
++ leaf PTE=0x000000002070b15b PPN =0x81c2c
++Flags: V=1 R=1 W=0 X=1 U=1 G=0 A=1 D=0
++
++=== Test Complete ===
++/ poweroff
++The system is going down NOW!
++Sent SIGTERM to all processes
++Sent SIGKILL to all processes
++Requesting system poweroff
++
++-- Analysis ---
++
++Flag combinations found:
++
++1. CODE (RX): V=1 R=1 W=0 X=1 - Read/Execute, not writable
++2. RODATA (RX): V=1 R=1 W=0 X=1 - Same as code (X bit unexpected)
++3. DATA/HEAP/STACK (RW): V=1 R=1 W=1 X=0 D=1 - Writable, not executable
++4. MMAP R-ONLY: V=1 R=1 W=0 X=0 - Read-only
++5. MMAP EXEC (RX): V=1 R=1 W=0 X=1 - mprotect() changed it to executable
++
++The syscall successfully reads SATP register, walks all 6 Sv57 page table levels, extracts the valid PTEs with the correct flags, and shows proper memory protection with the W^x enforcement
+-- 
+2.51.0
+

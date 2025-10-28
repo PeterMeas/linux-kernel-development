@@ -1,0 +1,35 @@
+From 496250a28d5078383125f631a1f599c18c41c55d Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Wed, 22 Oct 2025 02:47:21 +0000
+Subject: [RFC PATCH v1 0/2] kernel_module - peter_meas
+
+Completion : 30-40%
+
+Work in progress. This series implements a kernel module that creates a
+/proc/kdlp entry with a read-only interface returning a fixed message.
+
+My apporach involved following the test-driven development methodology
+by writing the spec file first to define exact behavior, then moving
+on to implement tests using Test Anything Protcol before writing th
+actual module code.
+
+Patch 1 adds the complete module specification defining file
+permissions, ownership, and operation behaviors while Patch 2 adds the
+testing program which is currently in progress and will be completed in
+the final submission.
+
+Peter Meas (2):
+  kernel_module: patch 1 - added specification.txt file
+  kernel_module: patch 2 - test.c and makefile
+
+ peter_meas/first_module/specification.txt | 17 +++++
+ peter_meas/first_module/tests/Makefile    |  0
+ peter_meas/first_module/tests/test.c      | 86 +++++++++++++++++++++++
+ 3 files changed, 103 insertions(+)
+ create mode 100644 peter_meas/first_module/specification.txt
+ create mode 100644 peter_meas/first_module/tests/Makefile
+ create mode 100644 peter_meas/first_module/tests/test.c
+
+-- 
+2.51.0
+

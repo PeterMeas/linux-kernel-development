@@ -1,0 +1,1 @@
+qemu-system-riscv64: cannot set up guest memory 'riscv_virt_board.ram': Cannot allocate memory

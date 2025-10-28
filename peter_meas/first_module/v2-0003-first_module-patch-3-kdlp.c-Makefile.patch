@@ -1,0 +1,78 @@
+From edc322fb47eb87864f3c376c17fb039b611a168f Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 24 Oct 2025 01:27:20 +0000
+Subject: [PATCH v2 3/4] first_module: patch 3 - kdlp.c & Makefile
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+---
+ peter_meas/first_module/Makefile | 13 +++++++++++
+ peter_meas/first_module/kdlp.c   | 37 ++++++++++++++++++++++++++++++++
+ 2 files changed, 50 insertions(+)
+ create mode 100644 peter_meas/first_module/Makefile
+ create mode 100644 peter_meas/first_module/kdlp.c
+
+diff --git a/peter_meas/first_module/Makefile b/peter_meas/first_module/Makefile
+new file mode 100644
+index 0000000..fd461f7
+--- /dev/null
++++ b/peter_meas/first_module/Makefile
+@@ -0,0 +1,13 @@
++obj-m += kdlp.o
++
++ARCH ?= riscv
++CROSS_COMPILE ?= riscv64-linux-gnu-
++KDIR ?= $(HOME)/linux
++
++default: build
++
++build:
++	make -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
++
++clean:
++	make -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
+diff --git a/peter_meas/first_module/kdlp.c b/peter_meas/first_module/kdlp.c
+new file mode 100644
+index 0000000..c32d1b9
+--- /dev/null
++++ b/peter_meas/first_module/kdlp.c
+@@ -0,0 +1,37 @@
++#include <linux/module.h>
++#include <linux/proc_fs.h>
++#include <linux/seq_file.h>
++
++#define PROC_PATH "/proc/kdlp"
++#define EXPECTED_MSG "KDLP module by Peter Meas\n"
++
++static struct proc_dir_entry *proc_entry;
++
++static int kdlp_show(struct seq_file *m, void *v) {
++
++	seq_printf(m, EXPECTED_MSG);
++	return 0;
++}
++
++static int __init kdlp_init(void) {
++
++	proc_entry = proc_create_single("kdlp", 0444, NULL, kdlp_show);
++	if (proc_entry == NULL) {
++		return -ENOMEM;
++	}
++
++	printk(KERN_INFO "KDLP MODULE LOADED\n");
++	return 0;
++}
++
++static void __exit kdlp_exit(void) {
++	proc_remove(proc_entry);
++	printk(KERN_INFO "KDLP MODULE UNLOADED\n");
++}
++
++module_init(kdlp_init);
++module_exit(kdlp_exit);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("PETER MEAS");
++MODULE_DESCRIPTION("Simple proc entry that returns a fixed msg");
+-- 
+2.51.0
+

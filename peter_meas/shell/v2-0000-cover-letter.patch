@@ -1,0 +1,58 @@
+From 9fd72eee7a87f0020ca9769ae2e8dc9d660e56d4 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 3 Oct 2025 02:17:55 +0000
+Subject: [PATCH v2 0/2] shell - peter_meas
+
+Completion : 70-80%
+
+I spent about 30-40 hours on this assignment so far, I attempted to
+implement the first seven features of the shell. My approach was  to
+implement and test each feature sequentially, following the assignment
+instructions and looking up Linux manuals and documentation.
+
+I implemented the prompt, basic input handling, and inital support for
+built in commands. I completed impkementation from 2.0-2.7, which
+included printing the absolute path prompt, handling input lines,
+parsing input into whitespace delimited tokens, and reporting
+unrecognized commands.
+
+Execution of external commands in child processes using the clone
+syscall and handling shared addrses space was also attempted at by me. I
+tried implementing features 2.8 and 2.9 but I believe there are many
+errors with them as they are not correctly running in the QEMU VM FOR
+THE LAST part of the assignment. 
+
+I had to define a lot of variables manually because my environment wasnt
+picking them up, even though the appropriate headers were included.
+Before I started the assignment also, my uClibc environment wasnt
+working right so i basically did like a reinstall to compile the shell
+correctly. 
+Piping between commands is kind of broken when doing it through the qemu
+vm, when i tested it locally through my makefile it was working fine. 
+
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+
+Peter Meas (2):
+  shell: patch 1 including features 1-7
+  shell: output.txt
+
+ peter_meas/shell/Makefile   |  20 +++++
+ peter_meas/shell/builtins.c |  35 +++++++++
+ peter_meas/shell/executor.c |  97 +++++++++++++++++++++++
+ peter_meas/shell/main.c     |  50 ++++++++++++
+ peter_meas/shell/output.txt |  50 ++++++++++++
+ peter_meas/shell/shell.h    |  49 ++++++++++++
+ peter_meas/shell/utils.c    | 151 ++++++++++++++++++++++++++++++++++++
+ 7 files changed, 452 insertions(+)
+ create mode 100644 peter_meas/shell/Makefile
+ create mode 100644 peter_meas/shell/builtins.c
+ create mode 100644 peter_meas/shell/executor.c
+ create mode 100644 peter_meas/shell/main.c
+ create mode 100644 peter_meas/shell/output.txt
+ create mode 100644 peter_meas/shell/shell.h
+ create mode 100644 peter_meas/shell/utils.c
+
+-- 
+2.51.0
+

@@ -1,0 +1,42 @@
+From df7021d72c10a358d2e7c697869aec9b6aedfc77 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 10 Oct 2025 01:53:46 +0000
+Subject: [PATCH v4 0/3] page_walk - peter_meas
+
+Completion 100%
+
+This patch series implements a system call for RISC-V that walks page
+tables and returns translation information to the userspace.
+
+I read RISC-V privileged spec chapter 4.3 and used resources like that
+to help me implement syscall #257 to read SATP, walk page table levels,
+ and return PTEs
+I created test program exercising code, data, heap, stack, and mmap
+regions, all tested in the QEMU VM, and analyzed flag combinations
+(V,R,W,X,U,G,A,D)
+
+I used resources such as the RISC-V privileged spec (section 4.3,4.4.1),
+OSTEP chapters 18-20, linux kernel docs for adding syscalls
+Fixed whitespace errors from V3
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+
+Peter Meas (3):
+  page_walk: add kernel syscall implementation patch
+  page_walk: patch2, add userspace test program & makefile
+  page_walk: patch 3;added testing output and questions files
+
+ peter_meas/page_walk/Makefile              |  11 ++
+ peter_meas/page_walk/questions.txt         |  36 +++++
+ peter_meas/page_walk/syscall.patch         | 137 +++++++++++++++++++
+ peter_meas/page_walk/test_pagetable_walk.c | 151 +++++++++++++++++++++
+ peter_meas/page_walk/testing_output.txt    |  86 ++++++++++++
+ 5 files changed, 421 insertions(+)
+ create mode 100644 peter_meas/page_walk/Makefile
+ create mode 100644 peter_meas/page_walk/questions.txt
+ create mode 100644 peter_meas/page_walk/syscall.patch
+ create mode 100644 peter_meas/page_walk/test_pagetable_walk.c
+ create mode 100644 peter_meas/page_walk/testing_output.txt
+
+-- 
+2.51.0
+

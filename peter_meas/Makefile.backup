@@ -1,0 +1,23 @@
+CC = riscv64-linux-gnu-gcc
+CFLAGS = -g -nostdlib -gdwarf-5 -static-pie -fPIC --sysroot=$(HOME)/sysroot -I$(HOME)/sysroot/usr/include -I$(HOME)/sysroot/usr/include/asm -Wno-error=implicit-function-declaration
+LDFLAGS = -static
+TARGET = shell
+SRC = main.o builtins.o executor.o utils.o
+
+INCLUDE = -I ~/sysroot/usr/include -I/home/peter_meas/sysroot/usr/include/asm
+
+LIBS = /home/peter_meas/sysroot/usr/lib/libc.a
+
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+%.o: %.c shell.h
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+clean:
+	rm -f $(TARGET) $(OBJS)

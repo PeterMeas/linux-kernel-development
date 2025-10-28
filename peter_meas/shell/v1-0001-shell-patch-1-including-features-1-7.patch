@@ -1,0 +1,231 @@
+From 7b1ad81f1e3eee7874d918af566e31c2e1b36546 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Wed, 1 Oct 2025 03:07:51 +0000
+Subject: [RFC PATCH v1 1/1] shell: patch 1 including features 1-7
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+---
+ peter_meas/shell/Makefile |  14 +++
+ peter_meas/shell/shell.c  | 189 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 203 insertions(+)
+ create mode 100644 peter_meas/shell/Makefile
+ create mode 100644 peter_meas/shell/shell.c
+
+diff --git a/peter_meas/shell/Makefile b/peter_meas/shell/Makefile
+new file mode 100644
+index 0000000..ca4d849
+--- /dev/null
++++ b/peter_meas/shell/Makefile
+@@ -0,0 +1,14 @@
++CC = riscv64-linux-gnu-gcc
++CFLAGS = -gdwarf-5 -static-pie -fPIC --sysroot=$(HOME)/sysroot -I$(HOME)/sysroot/usr/include -I$(HOME)/sysroot/usr/include/asm -Wno-error=implicit-function-declaration
++TARGET = shell
++SRC = shell.c
++
++.PHONY: all clean
++
++all: $(TARGET)
++
++$(TARGET): $(SRC)
++	$(CC) $(CFLAGS) $^ -o $@
++
++clean:
++	rm -f $(TARGET)
+diff --git a/peter_meas/shell/shell.c b/peter_meas/shell/shell.c
+new file mode 100644
+index 0000000..a3876c3
+--- /dev/null
++++ b/peter_meas/shell/shell.c
+@@ -0,0 +1,189 @@
++ 
++#define CLONE_VFORK 0x00004000
++#define _GNU_SOURCE
++#define _POSIX_C_SOURCE 200809L
++#define _XOPEN_SOURCE 700
++
++#ifndef X_OK
++#define X_OK 1
++#endif
++
++#define SIGCHLD 17
++#include <unistd.h>
++#include <stdio.h>
++#include <ctype.h>
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++#include <sys/resource.h>
++#include <sys/syscall.h>
++extern int errno;
++
++int main(void) {
++    char cwd[1024];
++    char *line = NULL;	// store input
++    size_t len = 0; 	// buffer size
++    size_t read;		//store num char read	
++    int found_content = 0;		
++
++
++    while (1) {
++    if (getcwd(cwd, sizeof(cwd)) == NULL) {
++        perror("getcwd");
++        return 1;
++    	}
++    
++	
++    printf("%s ", cwd);
++    fflush(stdout);
++
++    read = getline(&line, &len, stdin);   
++	if (read == -1) {
++	printf("\n");
++	break;
++	}//if EOF
++	
++	char *token = strtok(line, " \t\n");
++	if (token == NULL) {
++	//print nothing
++
++	} else if (strcmp(token, "exit") == 0) {
++		char *next_tok = strtok(NULL, " \t\n");
++		if (next_tok != NULL) {
++
++		printf("exit: too many arguments\n");
++		} else {
++			exit(0);
++		}
++	} else if (strcmp(token, "cd") == 0) {
++		char *path = strtok(NULL, " \t\n");
++		if (path == NULL) {
++		printf("cd: no arguments\n");
++		} else { //we have 2 arg
++		char *more_tok = strtok(NULL, " \t\n");
++			if (more_tok != NULL) {
++
++			printf("cd: too many arguments\n");
++		} else {
++		if (chdir(path) == -1) {
++			perror("cd");
++		}
++		}
++		
++	}
++	} else if (strcmp(token, "exec") == 0) {
++		char *argv[128];
++		int argc = 0;
++
++		char *arg = strtok(NULL, " \t\n");
++		while (arg != NULL && argc < 127) {
++		argv[argc] = arg;
++		argc++;
++		arg = strtok(NULL, " \t\n"); // store token in array, increment, move onto next tok
++		}
++
++		if (argc == 0) {
++		//do something
++		//user just typed exec with no arg
++		printf("exec: missing argument\n");
++		} else {
++		argv[argc] = NULL;
++		execve(argv[0], argv, NULL);
++		printf("exec: %s\n", strerror(errno));
++
++		}	
++	} else if (strchr(token, '/') != NULL) {
++	
++	char *argv[128];
++	int argc = 1;
++	argv[0] = token;
++	char *arg = strtok(NULL, " \t\n");
++	
++	while(arg != NULL && argc < 127) {
++		argv[argc] = arg;
++		argc++;
++		arg = strtok(NULL, " \t\n");
++	}
++		argv[argc] = NULL;	
++
++	
++	
++	pid_t pid = syscall(SYS_clone, CLONE_VFORK | SIGCHLD, NULL);
++
++	if (pid == 0) { //child
++
++	execve(argv[0], argv, NULL);
++	_exit(1);
++	} else if (pid > 0){
++	
++	int status;
++	wait4(pid, &status, 0, NULL);
++	
++	} else { 
++	
++	perror("clone"); //safe for buffeer
++	}
++
++} else {	// no '/' in input, lets search PATH
++	char *path_env = getenv("PATH");
++	if (path_env) {
++		char path_copy [1024];
++		strncpy(path_copy, path_env, sizeof(path_copy)-1);
++		path_copy[sizeof(path_copy)-1] = '\0';
++		
++		char *dir = strtok(path_copy, ":");
++		int found = 0;
++	while (dir != NULL && !found) {
++		char full_path[1024];
++		snprintf(full_path, sizeof(full_path), "%s/%s", dir, token);
++		if (access(full_path, X_OK) == 0) {
++			found = 1;
++			
++			char *argv[128];
++			argv[0] = full_path;
++			int argc= 1;
++
++			char *arg = strtok(NULL, " \t\n");
++			while (arg != NULL && argc < 127) {
++				argv[argc] = arg;
++				argc++;
++				arg = strtok(NULL, " \t\n");
++		}
++		
++		argv[argc] = NULL;
++		
++		pid_t pid = syscall(SYS_clone, CLONE_VFORK | SIGCHLD, NULL);
++
++        	if (pid == 0) { //child
++
++       		 execve(argv[0], argv, NULL);
++       		 _exit(1);
++        } else if (pid > 0){
++
++       		 int status;
++        	wait4(pid, &status, 0, NULL);
++
++        } else {
++
++       		 perror("clone"); //safe for buffeer
++        }
++
++
++	}
++		dir = strtok(NULL, ":");
++
++}
++	if (!found) {
++		printf("Unrecognized command: %s\n", token);
++	}	
++
++	}	
++
++	
++}
++    }
++
++	free(line);
++    return 0;
++    }
++
+-- 
+2.51.0
+

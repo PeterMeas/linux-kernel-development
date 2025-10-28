@@ -1,0 +1,1 @@
+savedcmd_kdlp.ko := riscv64-linux-gnu-ld -r -melf64lriscv -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /home/peter_meas/linux/scripts/module.lds -o kdlp.ko kdlp.o kdlp.mod.o .module-common.o

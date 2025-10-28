@@ -1,0 +1,67 @@
+From ef5771fe55556fb63c72d532e42c63e9012c4bcf Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 26 Sep 2025 03:17:59 +0000
+Subject: [PATCH v5 0/4] new_syscall - peter_meas
+
+Completed: 90-95%
+
+I spent about 5-6 hours doing this assignment. I pretty muched followed
+the general directions, adding a kdlp.c in the kernel with a
+SYSCALL_DEFINE to implement the needed syscall. I updated the
+syscalls.h, unistd.h and syscall.tbl to register my new syscall. From
+there, I compiled and ran the kernel with the new syscall using QEMU. I
+was then required to write a helper assembly function in kdlp_syscall.S,
+and this was to be used as a wrapper to go from kernel space to user
+space. I then modified the test.c file to include "extern" to call the
+kdlp function that was made in assembly, basically saying I'm here, and
+I rebuilt the program and captured outputs from both the original and
+modified kernels, storing them in txt files.
+
+I intially had problems locating the correct path for my unistd.h and
+asm/unistd.h in my Makefile which I later fixed. I had some syntax
+issues but fixed those as well.
+
+I also had problems with having 0001 patch file in my commits, had to
+git rebase, git rm , and git ammend these issues. Fixed these issues
+from v1 and v2 and v3 and correctly added kernel.patch, including it in the
+first patch; not emailing it. I also fixed the commit naming convention
+and renamed my commits as "new_syscall: (message)" to fit the guidelines
+correctly.
+I think i have issues with whitespace in my patches, I dont know how to apply this fix. I also
+missed out on modifying my test.c such that it gracefully reboots using the reboot() function, 
+I was unable to do this without messing up any git history commit and without it being messy
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+
+Peter Meas (4):
+  new_syscall: Add kdlp syscall kernel patch
+  new_syscall: Add test program to invoke new syscall and updated init
+  new_syscall: Add assembly helper for kdlp syscall and updated test
+    program
+  new_syscall: Add questions.txt and original_output.txt
+
+ peter_meas/new_syscall/Makefile            |  13 +++
+ peter_meas/new_syscall/assembly_output.txt |  48 +++++++++
+ peter_meas/new_syscall/kdlp_syscall.S      |   9 ++
+ peter_meas/new_syscall/kernel.patch        | 117 +++++++++++++++++++++
+ peter_meas/new_syscall/libc.config         |  16 +++
+ peter_meas/new_syscall/libc_test.c         |   9 ++
+ peter_meas/new_syscall/original_output.txt |  48 +++++++++
+ peter_meas/new_syscall/patched_output.txt  |  47 +++++++++
+ peter_meas/new_syscall/questions.txt       |   9 ++
+ peter_meas/new_syscall/test.c              |  29 +++++
+ 10 files changed, 345 insertions(+)
+ create mode 100644 peter_meas/new_syscall/Makefile
+ create mode 100644 peter_meas/new_syscall/assembly_output.txt
+ create mode 100644 peter_meas/new_syscall/kdlp_syscall.S
+ create mode 100644 peter_meas/new_syscall/kernel.patch
+ create mode 100644 peter_meas/new_syscall/libc.config
+ create mode 100644 peter_meas/new_syscall/libc_test.c
+ create mode 100644 peter_meas/new_syscall/original_output.txt
+ create mode 100644 peter_meas/new_syscall/patched_output.txt
+ create mode 100644 peter_meas/new_syscall/questions.txt
+ create mode 100644 peter_meas/new_syscall/test.c
+
+--
+2.51.0
+

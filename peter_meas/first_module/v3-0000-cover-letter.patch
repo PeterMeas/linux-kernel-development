@@ -1,0 +1,56 @@
+From d7deb8e119e0fff9071334d6bed06352bc7279bb Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 24 Oct 2025 02:08:48 +0000
+Subject: [PATCH v3 0/4] first_module - peter_meas
+
+Completion : 90%
+
+This series implements a kernel modue that creates a /proc/kdlp entry
+with a read=only interface returning a fixed msg.
+
+I looked at kernel source code for /proc/cmdline and /proc/config.gz to
+understand the proc_create_single API for making read only proc entries.
+I followed test driven development practices by writing the
+specification first to define behavior, then implemented tests using
+Test Anything Protocol (TAP) and finally writing the module code to fit
+and meet those tests.
+
+The implementation uses proc_create_single(0 with a simple show function
+that outputs a fixed message via seq_printf(). Module init creates the
+/proc entry with 0444 permissions owned by root, and module exit cleanly
+removes it using proc_remove().
+
+Due to previous issues between the custom shell from previous assignment
+and the testing environment, the live output capture wasn't able to be
+captured and the custom shell's limited command parsing conflicted with
+running standard Unix utilities during patch 4 testing. However, the
+module compiles cleanly without any errors, and the testing_output file
+contains the expected output, which demonstrates the correct module
+operation: tests fail, when the module is not loaded, all tets pass when
+loaded, and /p[roc/kdlp is accessible. tests fail again after unloading
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+
+Peter Meas (4):
+  first_module: patch 1 - added specification.txt file
+  first_module: patch 2 - test.c and makefile
+  first_module: patch 3 - kdlp.c & Makefile
+  first_module: patch 4 - expected testing output
+
+ peter_meas/first_module/Makefile           |  13 ++
+ peter_meas/first_module/kdlp.c             |  37 +++++
+ peter_meas/first_module/specification.txt  |  17 ++
+ peter_meas/first_module/testing_output.txt |  56 +++++++
+ peter_meas/first_module/tests/Makefile     |  10 ++
+ peter_meas/first_module/tests/test.c       | 174 +++++++++++++++++++++
+ 6 files changed, 307 insertions(+)
+ create mode 100644 peter_meas/first_module/Makefile
+ create mode 100644 peter_meas/first_module/kdlp.c
+ create mode 100644 peter_meas/first_module/specification.txt
+ create mode 100644 peter_meas/first_module/testing_output.txt
+ create mode 100644 peter_meas/first_module/tests/Makefile
+ create mode 100644 peter_meas/first_module/tests/test.c
+
+-- 
+2.51.0
+

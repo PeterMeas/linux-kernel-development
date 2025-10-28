@@ -1,0 +1,47 @@
+From 7b1ad81f1e3eee7874d918af566e31c2e1b36546 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Wed, 1 Oct 2025 03:11:52 +0000
+Subject: [RFC PATCH v1 0/1] shell - peter_meas
+
+Completed: 80-85%
+
+I spent about 15-20 hours on this assignment so far, with more hours to
+come. I have implemented the first seven features of the shell so far.
+My approach was to implement and check each feature sequentially by
+following assignment instructions and looking at linux manuals. I
+implemented the prompt, basic input handling, and initial support for
+built in commands such as exit and cd and exec. I finished
+implementation from 2.0-2.7, which includes being able to print the
+absolute path prompt and handle input lines, parsing input into
+whitesapce delimited tokens and reporting unrecognized commands, to
+implementing the built in commands like exit and cd with proper argument
+validation anad error handling. Support for exec was also implemented as
+per the assignment, to replace the shell process with a given/provided
+executable when you run the ./shell. Implementation regarding being able
+to xecute external commands in child processes using the clone syscall
+and handling shared address space was also implemented. Basicallyon 2.8 now and I just still trying tofigure out the things I need to know in order to be able to do so, given I haven't learned much about piping since I take OS next year and my Comp Arc
+class hasn't covered any of this yet.
+
+Known issues before submission:
+
+I've had to define some variables manually because my environment wasn't
+picking up on them even though I have included all the right headers
+I had issues at the start of my assigment with my uClibc not being
+installed properly, or something was wrong with it so I had to reinstall
+it
+
+Overall, the shell meets the majority of the requirements and can be run
+with QEMU, with everything up until 2.8 done.
+
+Peter Meas (1):
+  shell: patch 1 including features 1-7
+
+ peter_meas/shell/Makefile |  14 +++
+ peter_meas/shell/shell.c  | 189 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 203 insertions(+)
+ create mode 100644 peter_meas/shell/Makefile
+ create mode 100644 peter_meas/shell/shell.c
+
+-- 
+2.51.0
+

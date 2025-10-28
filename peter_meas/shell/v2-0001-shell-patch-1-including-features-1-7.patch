@@ -1,0 +1,462 @@
+From 3b3b6c6e702076aaa047d82b8f93500c5fa25d59 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Wed, 1 Oct 2025 03:07:51 +0000
+Subject: [PATCH v2 1/2] shell: patch 1 including features 1-7
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+---
+ peter_meas/shell/Makefile   |  20 +++++
+ peter_meas/shell/builtins.c |  35 +++++++++
+ peter_meas/shell/executor.c |  97 +++++++++++++++++++++++
+ peter_meas/shell/main.c     |  50 ++++++++++++
+ peter_meas/shell/shell.h    |  49 ++++++++++++
+ peter_meas/shell/utils.c    | 151 ++++++++++++++++++++++++++++++++++++
+ 6 files changed, 402 insertions(+)
+ create mode 100644 peter_meas/shell/Makefile
+ create mode 100644 peter_meas/shell/builtins.c
+ create mode 100644 peter_meas/shell/executor.c
+ create mode 100644 peter_meas/shell/main.c
+ create mode 100644 peter_meas/shell/shell.h
+ create mode 100644 peter_meas/shell/utils.c
+
+diff --git a/peter_meas/shell/Makefile b/peter_meas/shell/Makefile
+new file mode 100644
+index 0000000..6838816
+--- /dev/null
++++ b/peter_meas/shell/Makefile
+@@ -0,0 +1,20 @@
++CC = riscv64-linux-gnu-gcc
++
++CFLAGS = -gdwarf-5 -static-pie -fPIC --sysroot=$(HOME)/sysroot -I$(HOME)/sysroot/usr/include -Wno-error=implicit-function-declaration
++
++TARGET = shell
++SRC = main.c builtins.c executor.c utils.c
++OBJ = $(SRC:.c=.o)
++
++.PHONY: all clean
++
++all: $(TARGET)
++
++$(TARGET): $(OBJ)
++	$(CC) $(CFLAGS) -o $@ $^
++
++%.o: %.c shell.h
++	$(CC) $(CFLAGS) -c $< -o $@
++
++clean:
++	rm -f $(TARGET) $(OBJ)
+diff --git a/peter_meas/shell/builtins.c b/peter_meas/shell/builtins.c
+new file mode 100644
+index 0000000..ec74b08
+--- /dev/null
++++ b/peter_meas/shell/builtins.c
+@@ -0,0 +1,35 @@
++#include "shell.h"
++
++int builtin_exit(char **args, int argc) {
++    if (argc > 1) {
++        printf("exit: too many arguments\n");
++        return 1;
++    }
++    exit(0);
++}
++
++int builtin_cd(char **args, int argc) {
++    if (argc < 2) {
++        printf("cd: no arguments\n");
++        return 1;
++    }
++    if (argc > 2) {
++        printf("cd: too many arguments\n");
++        return 1;
++    }
++    if (chdir(args[1]) == -1) {
++        perror("cd");
++        return 1;
++    }
++    return 0;
++}
++
++int builtin_exec(char **args, int argc) {
++    if (argc < 2) {
++        printf("exec: missing argument\n");
++        return 1;
++    }
++    execve(args[1], &args[1], NULL);
++    printf("exec: %s\n", strerror(errno));
++    return 1;
++}
+diff --git a/peter_meas/shell/executor.c b/peter_meas/shell/executor.c
+new file mode 100644
+index 0000000..4c4d624
+--- /dev/null
++++ b/peter_meas/shell/executor.c
+@@ -0,0 +1,97 @@
++#include "shell.h"
++
++extern char **environ;
++int execute_absolute(char *cmd, char **argv, int argc, char *in_file, char *out_file) {
++    pid_t pid = syscall(SYS_clone, CLONE_VFORK | SIGCHLD, NULL);
++
++    if (pid == 0) {	   
++	
++	 if (in_file != NULL) {
++		//user wants inpput direc
++		//
++		int fdi = open(in_file, O_RDONLY);
++		if (fdi < 0) {
++			perror(in_file);
++			_exit(1);
++		}
++		dup2 (fdi, 0);
++		close (fdi);
++	} else {
++	
++	//null
++	}
++	
++	if (out_file != NULL) {
++		// user wants output direc
++		int fdo = open(out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
++		if (fdo < 0) {
++
++			perror(out_file);
++			_exit(1);
++		}
++
++		dup2 (fdo, 1);
++		close (fdo);
++	} else {
++	
++	//null
++	}
++
++    
++	    
++        execve(cmd, argv, environ);
++        _exit(1);
++    } else if (pid > 0) {
++        int status;
++        wait4(pid, &status, 0, NULL);
++        return status;
++    } else {
++        perror("clone");
++        return -1;
++    }
++}
++
++int execute_with_path(char *cmd, char **argv, int argc, char *in_file, char *out_file) {
++
++	char full_path[MAX_PATH];
++
++	if (!find_cmd_path(cmd, full_path)) {
++		printf("Unrecognized command: %s\n", cmd);
++		return 1;
++	}
++	argv[0] = full_path;
++	return execute_absolute(full_path, argv, argc, in_file, out_file);
++}
++
++
++char* find_cmd_path(char *cmd, char *path_buffer) {
++	if (strchr(cmd, '/') != NULL) {
++		strcpy(path_buffer, cmd);
++		return path_buffer;
++	}
++
++	char *path_env = getenv("PATH");
++	if (!path_env) {
++		//printf("Unrecognized command: %s\n", cmd;)
++		//return 1
++		//;
++		return NULL;
++	}
++
++	char path_copy[MAX_PATH];
++	strncpy(path_copy, path_env, sizeof(path_copy)-1);
++	path_copy[sizeof(path_copy)-1] = '\0';
++
++	char *dir = strtok(path_copy, ":");
++	while (dir != NULL) {
++		snprintf(path_buffer, MAX_PATH, "%s/%s", dir, cmd);
++
++		if (access(path_buffer, X_OK) == 0) {
++			return path_buffer;
++		}
++		dir = strtok(NULL, ":");
++	}
++	return NULL;
++
++
++}
+diff --git a/peter_meas/shell/main.c b/peter_meas/shell/main.c
+new file mode 100644
+index 0000000..b3abbc8
+--- /dev/null
++++ b/peter_meas/shell/main.c
+@@ -0,0 +1,50 @@
++#include "shell.h"
++
++int main(void) {
++    char *line = NULL;
++    size_t len = 0;
++
++    while (1) {
++        print_prompt();
++
++        ssize_t read = getline(&line, &len, stdin);
++        if (read == -1) {
++            printf("\n");
++            break;
++        }
++	if (strchr(line, '|') != NULL) {
++		int pipe_counter = 0;
++		for (int i = 0; line[i]; i++) {
++			if (line[i] == '|') pipe_counter++;
++		}
++		printf("Found %d pipe(s)\n", pipe_counter);
++		handle_pipeline(line);
++		continue;
++		// split command, handle pipeline
++	}
++
++        int argc = 0;
++        char **argv = parse_command(line, &argc);
++
++	char *output_file = NULL;
++	char *input_file = NULL;
++	detect_redirections(argv, &argc, &output_file, &input_file);
++
++        if (argv[0] == NULL) {
++            // empty line
++        } else if (strcmp(argv[0], "exit") == 0) {
++            builtin_exit(argv, argc);
++        } else if (strcmp(argv[0], "cd") == 0) {
++            builtin_cd(argv, argc);
++        } else if (strcmp(argv[0], "exec") == 0) {
++            builtin_exec(argv, argc);
++        } else if (strchr(argv[0], '/') != NULL) {
++            execute_absolute(argv[0], argv, argc, input_file, output_file);
++        } else {
++            execute_with_path(argv[0], argv, argc, input_file, output_file);
++        }
++    }
++
++    free(line);
++    return 0;
++}
+diff --git a/peter_meas/shell/shell.h b/peter_meas/shell/shell.h
+new file mode 100644
+index 0000000..71c4532
+--- /dev/null
++++ b/peter_meas/shell/shell.h
+@@ -0,0 +1,49 @@
++#ifndef SHELL_H
++#define SHELL_H
++
++#define _GNU_SOURCE
++#define _POSIX_C_SOURCE 200809L
++#define _XOPEN_SOURCE 700
++#define STDIN_FILENO 0
++#define STDOUT_FILENO 1
++#define STDERR_FILENO 2
++
++#include <fcntl.h>
++#include <sys/stat.h>
++
++#include <signal.h>
++#include <unistd.h>
++#include <stdio.h>
++#include <ctype.h>
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++#include <sys/resource.h>
++#include <sys/syscall.h>
++#include <sys/types.h>
++#include <asm/unistd.h>
++
++
++#define CLONE_VFORK 0x00004000
++#ifndef X_OK
++#define X_OK 1
++#endif
++#define MAX_ARGS 128
++#define MAX_PATH 1024
++
++int builtin_exit(char **args, int argc);
++int builtin_cd(char **args, int argc);
++int builtin_exec(char **args, int argc);
++
++int execute_absolute(char *cmd, char **argv, int argc, char *in_file, char *out_file);
++int execute_with_path(char *cmd, char **argv, int argc, char *in_file, char *out_file);
++
++void print_prompt(void);
++char **parse_command(char *line, int *argc);
++void free_args(char **argv, int argc);
++
++void detect_redirections(char **argv, int *argc, char **out_file, char **in_file);
++
++void handle_pipeline(char *line);
++char* find_cmd_path(char *cmd, char *path_buffer);
++#endif
+diff --git a/peter_meas/shell/utils.c b/peter_meas/shell/utils.c
+new file mode 100644
+index 0000000..0d3ce22
+--- /dev/null
++++ b/peter_meas/shell/utils.c
+@@ -0,0 +1,151 @@
++#include "shell.h"
++
++extern char **environ;
++
++void print_prompt(void) {
++    char cwd[MAX_PATH];
++    if (getcwd(cwd, sizeof(cwd)) == NULL) {
++        perror("getcwd");
++        printf("$ ");
++    } else {
++        printf("%s ", cwd);
++    }
++    fflush(stdout);
++}
++
++char **parse_command(char *line, int *argc) {
++    static char *argv[MAX_ARGS];
++    *argc = 0;
++
++    char *token = strtok(line, " \t\n");
++    while (token && *argc < MAX_ARGS-1) {
++        argv[*argc] = token;
++        (*argc)++;
++        token = strtok(NULL, " \t\n");
++    }
++    argv[*argc] = NULL;
++    return argv;
++}
++
++void free_args(char **argv, int argc) {
++    (void)argv;
++    (void)argc;
++}
++
++void detect_redirections(char **argv, int *argc, char **out_file, char **in_file) {
++	char *output_file = NULL;
++	char *input_file = NULL;
++	int new_argc = 0;
++/*	*out_file = NULL;
++	*in_file = NULL;*/
++
++	for (int i =0; i < *argc; i++) {
++		//check for filename after ">"
++		if (strcmp(argv[i], ">") == 0) {
++			if (i+1 < *argc && argv[i+1] != NULL) {
++				*out_file = argv[i+1];
++				printf("Output redirection to: %s\n", *out_file);
++				i++;	
++			}
++		} else if (strcmp(argv[i], "<") == 0) {
++		//logic for input redirection
++		if (i+1 < *argc && argv[i+1] != NULL) {
++			*in_file = argv[i+1];
++			printf("Input redirection to: %s\n", *in_file);
++			i++;
++		}
++	} else {
++	
++		argv[new_argc++] = argv[i];
++	}
++
++     }
++
++	//*argc = new_argc; 
++	argv[new_argc] = NULL; 
++	*argc = new_argc;
++}
++
++
++void handle_pipeline(char *line) {
++	char *commands[10];
++	int cmd_ct = 0;
++
++	char *cmd = strtok(line, "|");
++
++	while(cmd != NULL && cmd_ct < 10){
++	
++		commands[cmd_ct] = cmd;
++		cmd_ct++;
++		cmd = strtok(NULL, "|");
++		//cmd_ct++;
++
++	}
++	if (cmd_ct < 2) {
++		return;
++	}
++
++	char **argvs[10];
++	int argcs[10];
++	char paths[10][MAX_PATH];
++
++	for (int i =0; i < cmd_ct; i++) {
++
++		argvs[i] = parse_command(commands[i], &argcs[i]);
++		if (!find_cmd_path(argvs[i][0], paths[i])) {
++			printf("cmd not found: %s\n", argvs[i][0]);
++return;
++		}
++	}
++
++	int pipes[9][2];
++	for (int i =0; i <cmd_ct-1; i++) {
++		if (pipe(pipes[i]) == -1) {
++			perror("pipe");
++			return;
++		}
++	}
++
++	pid_t pids[10];
++
++	for (int i = 0; i < cmd_ct; i++) {
++        pids[i] = syscall(SYS_clone, CLONE_VFORK | SIGCHLD, NULL);
++
++        if (pids[i] == 0) {  // Child
++            // Set up redirections
++            if (i > 0) {
++                // Not first command: read from previous pipe
++                dup2(pipes[i-1][0], STDIN_FILENO);
++            }
++
++            if (i < cmd_ct-1) {
++                // Not last command: write to next pipe
++                dup2(pipes[i][1], STDOUT_FILENO);
++            }
++
++            // Close all pipe fds
++            for (int j = 0; j < cmd_ct-1; j++) {
++                close(pipes[j][0]);
++                close(pipes[j][1]);
++            }
++
++            // Execute
++            execve(paths[i], argvs[i], environ);
++            perror(argvs[i][0]);
++	    _exit(1);
++        }
++    }
++
++    // Parent: close all pipes
++    for (int i = 0; i < cmd_ct-1; i++) {
++        close(pipes[i][0]);
++        close(pipes[i][1]);
++    }
++
++    // Wait for all children
++    for (int i = 0; i < cmd_ct; i++) {
++        wait4(pids[i], NULL, 0, NULL);
++    }
++
++
++}
+-- 
+2.51.0
+

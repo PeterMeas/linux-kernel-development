@@ -1,0 +1,76 @@
+From 0b3915da12c61f6ef423034f3325ebb44d0fc940 Mon Sep 17 00:00:00 2001
+From: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+Date: Fri, 24 Oct 2025 01:54:20 +0000
+Subject: [PATCH v2 4/4] first_module: patch 4 - expected testing output
+
+Signed-off-by: Peter Meas <peter_meas@fall2025-uml.kdlp.underground.software>
+---
+ peter_meas/first_module/testing_output.txt | 56 ++++++++++++++++++++++
+ 1 file changed, 56 insertions(+)
+ create mode 100644 peter_meas/first_module/testing_output.txt
+
+diff --git a/peter_meas/first_module/testing_output.txt b/peter_meas/first_module/testing_output.txt
+new file mode 100644
+index 0000000..723a346
+--- /dev/null
++++ b/peter_meas/first_module/testing_output.txt
+@@ -0,0 +1,56 @@
++Testing kdlp kernel module
++
++# Before loading module - tests should fail
++# ./test
++1..10
++not ok 1 - File does not exist
++not ok 2 - File is not read only
++not ok 3 - File is not owned by root and group root
++not ok 4 - File is not open for reading
++not ok 5 - failed to open file for reading
++not ok 6 - fie position did not advance correctly
++not ok 7 - did not hit EOF as expected
++not ok 8 - failed with wrong error code
++not ok 9 - seeking does not work correctly
++not ok 10 - negative seek position did not fail as expected
++
++# Load the module
++# insmod kdlp.ko
++kdlp: loading out-of-tree module taints kernel.
++KDLP MODULE LOADED
++
++# Verify /proc/kdlp exists and has correct content
++# cat /proc/kdlp
++KDLP module by Peter Meas
++
++# Run tests again - should all pass
++# ./test
++1..10
++ok 1 - File exists
++ok 2 - File is read only
++ok 3 - File is owned by user root and group root
++ok 4 - File is open for reading
++ok 5 - content read and matches
++ok 6 - file position advances correctly
++ok 7 - hit EOF as expected
++ok 8 - failed with right error code
++ok 9 - seeking works correctly
++ok 10 - negative seek position fails
++
++# Unload the module
++# rmmod kdlp
++KDLP MODULE UNLOADED
++
++# Run tests one more time - should fail again
++# ./test
++1..10
++not ok 1 - File does not exist
++not ok 2 - File is not read only
++not ok 3 - File is not owned by root and group root
++not ok 4 - File is not open for reading
++not ok 5 - failed to open file for reading
++not ok 6 - fie position did not advance correctly
++not ok 7 - did not hit EOF as expected
++not ok 8 - failed with wrong error code
++not ok 9 - seeking does not work correctly
++not ok 10 - negative seek position did not fail as expected
+-- 
+2.51.0
+
